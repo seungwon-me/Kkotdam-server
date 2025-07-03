@@ -20,15 +20,27 @@ repositories {
 }
 
 dependencies {
+
+    // Spring Boot Starter Package
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    runtimeOnly("com.mysql:mysql-connector-j")
+
     testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.springframework.security:spring-security-test")
+
+    // Jackson Module for Kotlin
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+
+    // Kotlin
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+
+    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
+
+    // MySQL Connector
+    runtimeOnly("com.mysql:mysql-connector-j")
+
+    // JUnit
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

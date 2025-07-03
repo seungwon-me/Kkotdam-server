@@ -1,1 +1,12 @@
-spring.application.name=kkotdam
+server:
+  port: 8080
+
+spring:
+  application:
+    name: kkotdam
+
+  profiles:
+    active: dev
+
+  jackson:
+    property-naming-strategy: SNAKE_CASE
