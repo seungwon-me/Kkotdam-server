@@ -1,5 +1,6 @@
 package me.seungwon.kkotdam.exception
 
+import jakarta.servlet.http.HttpServletRequest
 import me.seungwon.kkotdam.error.ErrorResponse
 import me.seungwon.kkotdam.error.type.ErrorCode
 import org.springframework.http.ResponseEntity
@@ -11,33 +12,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 class GlobalExceptionHandler {
 
     @ExceptionHandler(KKotdamException::class)
-    fun handleKKotdamException(e: KKotdamException): ResponseEntity<ErrorResponse> {
-        val errorCode = e.errorCode
-        val errorResponse = ErrorResponse(errorCode.status.value(), errorCode.message)
-
-        return ResponseEntity
-            .status(errorCode.status)
-            .body(errorResponse)
+    fun handleKKotdamException(e: KKotdamException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        return ErrorResponse.of(e.errorCode, request, e.message)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
-        val errorCode = ErrorCode.INVALID_INPUT_VALUE
+    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
         val errorMessage = e.bindingResult.allErrors.joinToString(", ") { it.defaultMessage ?: "Unknown error" }
-        val errorResponse = ErrorResponse(errorCode.status.value(), errorMessage)
-
-        return ResponseEntity
-            .status(errorCode.status)
-            .body(errorResponse)
+        return ErrorResponse.of(ErrorCode.INVALID_INPUT_VALUE, request, errorMessage)
     }
 
     @ExceptionHandler(Exception::class)
-    fun handleException(e: Exception): ResponseEntity<ErrorResponse> {
-        val errorCode = ErrorCode.INTERNAL_SERVER_ERROR
-        val errorResponse = ErrorResponse(errorCode.status.value(), e.message ?: errorCode.message)
-
-        return ResponseEntity
-            .status(errorCode.status)
-            .body(errorResponse)
+    fun handleException(e: Exception, request: HttpServletRequest): ResponseEntity<ErrorResponse> {
+        return ErrorResponse.of(ErrorCode.INTERNAL_SERVER_ERROR, request, e.message)
     }
 }
