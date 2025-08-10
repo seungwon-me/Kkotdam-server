@@ -1,43 +1,58 @@
 package me.seungwon.kkotdam.exception
 
 import me.seungwon.kkotdam.error.ErrorResponse
-import me.seungwon.kkotdam.error.type.ErrorCode
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
+import jakarta.servlet.http.HttpServletRequest
 
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
-    @ExceptionHandler(KKotdamException::class)
-    fun handleKKotdamException(e: KKotdamException): ResponseEntity<ErrorResponse> {
-        val errorCode = e.errorCode
-        val errorResponse = ErrorResponse(errorCode.status.value(), errorCode.message)
-
-        return ResponseEntity
-            .status(errorCode.status)
-            .body(errorResponse)
-    }
-
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleMethodArgumentNotValidException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
-        val errorCode = ErrorCode.INVALID_INPUT_VALUE
-        val errorMessage = e.bindingResult.allErrors.joinToString(", ") { it.defaultMessage ?: "Unknown error" }
-        val errorResponse = ErrorResponse(errorCode.status.value(), errorMessage)
-
-        return ResponseEntity
-            .status(errorCode.status)
-            .body(errorResponse)
+    fun handleValidationExceptions(
+        ex: MethodArgumentNotValidException,
+        request: HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val detail = ex.bindingResult.allErrors.firstOrNull()?.defaultMessage ?: "Validation failed"
+        val errorResponse = ErrorResponse(
+            type = "/errors/invalid-parameters",
+            title = "Invalid Parameters",
+            status = HttpStatus.BAD_REQUEST.value(),
+            detail = detail,
+            requestPath = request.requestURI
+        )
+        return ResponseEntity.badRequest().body(errorResponse)
     }
 
     @ExceptionHandler(Exception::class)
-    fun handleException(e: Exception): ResponseEntity<ErrorResponse> {
-        val errorCode = ErrorCode.INTERNAL_SERVER_ERROR
-        val errorResponse = ErrorResponse(errorCode.status.value(), e.message ?: errorCode.message)
-
-        return ResponseEntity
-            .status(errorCode.status)
-            .body(errorResponse)
+    fun handleGenericException(
+        ex: Exception,
+        request: HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val errorResponse = ErrorResponse(
+            type = "/errors/internal-server-error",
+            title = "Internal Server Error",
+            status = HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            detail = ex.message ?: "An unexpected error occurred",
+            requestPath = request.requestURI
+        )
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse)
+    }
+    @ExceptionHandler(KKotdamException::class)
+    fun handleKKotdamException(
+        ex: KKotdamException,
+        request: HttpServletRequest
+    ): ResponseEntity<ErrorResponse> {
+        val errorResponse = ErrorResponse(
+            type = ex.errorCode.type,
+            title = ex.errorCode.title,
+            status = ex.errorCode.status,
+            detail = ex.message ?: ex.errorCode.detail,
+            requestPath = request.requestURI
+        )
+        return ResponseEntity.status(ex.errorCode.status).body(errorResponse)
     }
 }
